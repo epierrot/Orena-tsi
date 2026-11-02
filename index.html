@@ -1,0 +1,767 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Le Bunker d'Orena</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Stencil+Display:wght@500;800;900&family=Special+Elite&family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Concept : un bunker sous la maison d'Orena. Murs froids, casiers numérotés, fiches papier tapées à la machine, alarme rouge et lumière sodium. Un seul thème sombre, assumé. */
+:root{
+  --bunker:#12161b; --wall:#1b2128; --wall2:#232b34; --line:#33404c;
+  --text:#dde2e6; --muted:#8c98a3;
+  --paper:#e8dfc8; --paper2:#d9ceb2; --ink:#2b261d;
+  --alarm:#e5432f; --alarm-dim:#5a1f19; --sodium:#f0ae37; --cold:#86b4c7; --ok:#7cc59a;
+  --f-display:"Big Shoulders Stencil Display","Impact","Arial Narrow",sans-serif;
+  --f-type:"Special Elite","Courier New",monospace;
+  --f-body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{min-height:100%}
+body{background:var(--bunker);color:var(--text);font:16px/1.5 var(--f-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bunker)}
+button{font:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid var(--sodium);outline-offset:2px}
+h1,h2,h3{text-wrap:balance;margin:0}
+.wrap{max-width:1180px;margin:0 auto}
+.btn{border:1px solid var(--line);background:var(--wall2);color:var(--text);padding:.6em 1.1em;border-radius:4px;font-weight:600}
+.btn:hover{border-color:var(--sodium)}
+.btn.hot{background:var(--alarm);border-color:var(--alarm);color:#fff}
+.btn.amber{background:var(--sodium);border-color:var(--sodium);color:#1a1206}
+.btn.small{padding:.35em .7em;font-size:.88rem}
+.label{font:600 .72rem/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.view{display:none}
+.view.on{display:block}
+
+/* ---------- ACCUEIL ---------- */
+#home{padding-block:48px 64px}
+.hero{display:grid;grid-template-columns:1.2fr 1fr;gap:40px;align-items:center}
+.hero h1{font:900 clamp(3rem,9vw,7rem)/.86 var(--f-display);letter-spacing:.01em;text-transform:uppercase}
+.hero h1 span{color:var(--alarm)}
+.hero .date{font:600 .9rem var(--f-mono);color:var(--sodium);letter-spacing:.2em;margin-bottom:14px}
+.hero p{color:var(--muted);max-width:56ch;font-size:1.08rem}
+.tape{background:var(--paper);color:var(--ink);font:1rem/1.6 var(--f-type);padding:22px 24px;transform:rotate(-1.2deg);box-shadow:0 18px 40px #0008;position:relative}
+.tape::before{content:"";position:absolute;top:-12px;left:40%;width:90px;height:24px;background:#cfc2a0cc;transform:rotate(3deg)}
+.choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin-top:44px}
+.choice{text-align:left;background:var(--wall);border:1px solid var(--line);border-radius:6px;padding:22px;color:var(--text);display:grid;gap:8px}
+.choice:hover{border-color:var(--sodium);background:var(--wall2)}
+.choice b{font:800 1.9rem/1 var(--f-display);text-transform:uppercase;letter-spacing:.02em}
+.choice span{color:var(--muted)}
+.choice.prof b{color:var(--cold)}
+.choice.team b{color:var(--sodium)}
+.choice.corner b{font-size:1.4rem;color:var(--muted)}
+
+/* ---------- PROJECTION ---------- */
+#proj{padding-block:20px 40px}
+.stage{position:fixed;inset:0;z-index:50;background:#07090b;display:none;align-items:center;justify-content:center;padding:max(24px,env(safe-area-inset-top,0px)) max(24px,env(safe-area-inset-right,0px)) 24px max(24px,env(safe-area-inset-left,0px))}
+.stage.on{display:flex}
+#noise{position:absolute;inset:0;width:100%;height:100%;opacity:.0;image-rendering:pixelated;pointer-events:none;transition:opacity .4s}
+.scene{position:relative;max-width:980px;width:100%;color:var(--text)}
+.glitch{font:900 clamp(2.4rem,8vw,6.5rem)/.9 var(--f-display);text-transform:uppercase;color:var(--alarm);text-align:center;animation:jit .12s steps(2) infinite}
+@keyframes jit{0%{transform:translate(0,0);text-shadow:3px 0 var(--cold),-3px 0 var(--alarm-dim)}50%{transform:translate(-2px,1px);text-shadow:-3px 0 var(--cold),3px 0 var(--alarm-dim)}}
+.sub{font:600 1.1rem var(--f-mono);color:var(--sodium);text-align:center;letter-spacing:.2em;margin-top:18px}
+.typed{font:clamp(1.15rem,2.3vw,1.6rem)/1.55 var(--f-type);white-space:pre-wrap;min-height:1.6em}
+.typed .cur{display:inline-block;width:.55em;height:1.1em;background:var(--sodium);vertical-align:-.15em;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.orena{display:grid;grid-template-columns:220px 1fr;gap:28px;align-items:start}
+.screen{background:#0c1114;border:2px solid var(--line);aspect-ratio:3/4;position:relative;overflow:hidden;max-width:100%}
+.screen canvas{width:100%;height:100%;display:block}
+.screen .tag{position:absolute;left:8px;top:8px;font:600 .7rem var(--f-mono);color:var(--alarm);letter-spacing:.15em}
+.screen .tag::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--alarm);margin-right:6px;animation:blink 1s steps(1) infinite}
+.dissolve{transition:filter 1.6s,opacity 1.6s,letter-spacing 1.6s}
+.dissolve.go{filter:blur(8px);opacity:0;letter-spacing:.4em}
+.skip{position:absolute;right:max(20px,env(safe-area-inset-right,0px));bottom:20px;z-index:2}
+.destruct{font:800 1.4rem var(--f-display);color:var(--alarm);letter-spacing:.06em;margin-top:18px;text-transform:uppercase}
+
+.ptop{display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.ptop h2{font:800 1.6rem var(--f-display);text-transform:uppercase;letter-spacing:.04em}
+.clock{font:900 clamp(5rem,18vw,15rem)/.85 var(--f-display);text-align:center;font-variant-numeric:tabular-nums;color:var(--text);margin:18px 0 6px;letter-spacing:.02em}
+.clock.warn{color:var(--sodium)}
+.clock.red{color:var(--alarm);animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.55}}
+.cap{text-align:center;font:600 .9rem var(--f-mono);letter-spacing:.25em;color:var(--muted);text-transform:uppercase}
+.radar{height:6px;background:var(--wall2);border-radius:3px;overflow:hidden;margin:16px auto 0;max-width:820px;position:relative}
+.radar i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,var(--cold),var(--sodium),var(--alarm));width:0}
+.road{display:flex;justify-content:space-between;max-width:820px;margin:6px auto 0;font:600 .72rem var(--f-mono);color:var(--muted);letter-spacing:.1em}
+.banner{max-width:900px;margin:22px auto 0;border:1px solid var(--alarm);background:#2a100d;color:#ffd9d2;padding:14px 18px;font:1.25rem var(--f-type);text-align:center;display:none}
+.banner.on{display:block;animation:flash .5s 4}
+@keyframes flash{50%{background:var(--alarm);color:#fff}}
+.board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:28px}
+.tcard{background:var(--wall);border:1px solid var(--line);border-radius:6px;padding:14px 16px;display:grid;gap:10px}
+.tcard.out{border-color:var(--ok);background:#15241c}
+.tcard h3{font:800 1.5rem var(--f-display);text-transform:uppercase;letter-spacing:.03em;display:flex;justify-content:space-between;align-items:baseline}
+.tcard h3 small{font:600 .8rem var(--f-mono);color:var(--ok)}
+.pips{display:flex;gap:5px}
+.pips i{flex:1;height:14px;border-radius:2px;background:var(--wall2);border:1px solid var(--line)}
+.pips i.f{background:var(--sodium);border-color:var(--sodium)}
+.trow{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.controls{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:28px;padding-top:18px;border-top:1px solid var(--line)}
+.vol{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:.9rem}
+.podium{max-width:700px;margin:24px auto 0;display:none}
+.podium.on{display:block}
+.podium ol{list-style:none;padding:0;margin:10px 0 0;display:grid;gap:8px}
+.podium li{display:grid;grid-template-columns:48px 1fr auto;gap:12px;align-items:center;background:var(--wall);padding:10px 14px;border-radius:4px;font-variant-numeric:tabular-nums}
+.podium li b{font:900 2rem var(--f-display);color:var(--sodium)}
+
+/* ---------- ÉQUIPE ---------- */
+#team{padding-block:0 60px}
+.thead{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bunker);border-bottom:1px solid var(--line);padding:10px 0;display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.thead .who{font:800 1.3rem var(--f-display);text-transform:uppercase;letter-spacing:.04em}
+.thead .who small{display:block;font:400 .85rem var(--f-body);color:var(--muted);text-transform:none;letter-spacing:0}
+.tclock{font:900 2.4rem/1 var(--f-display);font-variant-numeric:tabular-nums}
+.tclock.red{color:var(--alarm)}
+.slots{display:flex;gap:4px}
+.slots span{width:30px;height:38px;border:1px solid var(--line);background:var(--wall);display:grid;place-items:center;font:900 1.5rem var(--f-display);color:var(--sodium);position:relative}
+.slots span::after{content:attr(data-n);position:absolute;bottom:-14px;font:600 .6rem var(--f-mono);color:var(--muted)}
+.signup{max-width:640px;margin:40px auto;display:grid;gap:18px}
+.signup h2{font:900 2.6rem/.95 var(--f-display);text-transform:uppercase}
+.teams{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.teams button{background:var(--wall);border:1px solid var(--line);color:var(--text);padding:12px 6px;border-radius:4px;font:800 1.15rem var(--f-display);text-transform:uppercase;letter-spacing:.04em}
+.teams button[aria-pressed="true"]{background:var(--sodium);color:#1a1206;border-color:var(--sodium)}
+.field{display:grid;gap:6px}
+.field input{background:var(--wall);border:1px solid var(--line);color:var(--text);padding:.7em .8em;border-radius:4px;font:inherit}
+.intro{margin:22px 0 8px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:end}
+.intro p{margin:0;color:var(--muted);max-width:62ch}
+.lockers{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:18px}
+.locker{position:relative;background:linear-gradient(180deg,var(--wall2),var(--wall));border:1px solid var(--line);border-radius:4px;padding:16px 14px 14px;text-align:left;color:var(--text);min-height:170px;display:flex;flex-direction:column;gap:6px;overflow:hidden}
+.locker::before{content:"";position:absolute;left:14px;right:14px;top:58px;height:2px;background:repeating-linear-gradient(90deg,var(--line) 0 10px,transparent 10px 14px)}
+.locker:hover{border-color:var(--sodium)}
+.locker .num{font:900 2.6rem/1 var(--f-display);color:var(--line)}
+.locker .th{margin-top:auto;font:800 1.25rem var(--f-display);text-transform:uppercase;letter-spacing:.03em}
+.locker .st{font:600 .72rem var(--f-mono);letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
+.locker.done{border-color:var(--ok)}
+.locker.done .num{color:var(--ok)}
+.locker.done .st{color:var(--ok)}
+.locker .got{position:absolute;right:12px;top:10px;font:900 3rem/1 var(--f-display);color:var(--sodium)}
+.door{margin-top:34px;background:var(--wall);border:1px solid var(--line);border-radius:6px;padding:22px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-items:center}
+.door h3{font:900 2rem var(--f-display);text-transform:uppercase}
+.door p{margin:4px 0 0;color:var(--muted)}
+.door form{display:flex;gap:8px;flex-wrap:wrap}
+.door input{width:12ch;background:var(--bunker);border:1px solid var(--line);color:var(--sodium);font:800 1.6rem var(--f-display);letter-spacing:.25em;text-transform:uppercase;padding:.25em .5em;border-radius:4px}
+.msg{min-height:1.4em;font-weight:600;margin-top:6px}
+.msg.bad{color:var(--alarm)} .msg.good{color:var(--ok)}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+
+/* fiche */
+.sheetbg{position:fixed;inset:0;z-index:40;background:#05070acc;display:none;overflow:auto;padding:max(20px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 30px max(16px,env(safe-area-inset-left,0px))}
+.sheetbg.on{display:block}
+.sheet{max-width:760px;margin:10px auto;background:var(--paper);color:var(--ink);padding:28px clamp(18px,4vw,40px) 30px;box-shadow:0 30px 60px #000a;position:relative;font:1.05rem/1.6 var(--f-type)}
+.sheet::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 80% 10%,#0000 60%,#6b5a3018)}
+.sheet .stamp{position:absolute;right:22px;top:18px;border:3px solid #a8321f;color:#a8321f;font:900 1.1rem var(--f-display);letter-spacing:.12em;padding:2px 10px;transform:rotate(6deg);text-transform:uppercase}
+.sheet h2{font:900 2.3rem/1 var(--f-display);text-transform:uppercase;letter-spacing:.02em;margin:6px 0 14px;padding-right:120px}
+.sheet .k{font:600 .75rem var(--f-mono);letter-spacing:.16em;text-transform:uppercase;color:#6d6250}
+.sheet p{margin:.6em 0}
+.sheet code,.sheet pre{font-family:var(--f-mono);font-size:.92rem}
+.sheet pre{background:#f4eedd;border:1px dashed #a89a78;padding:12px 14px;overflow-x:auto;margin:.8em 0}
+.sheet table{border-collapse:collapse;width:100%;font:.92rem var(--f-mono);font-variant-numeric:tabular-nums}
+.sheet th,.sheet td{border:1px solid #b6a77f;padding:4px 8px;text-align:left}
+.sheet th{background:#d9ceb2}
+.tblwrap{overflow-x:auto;margin:.8em 0}
+.sheet .q{font-weight:700;border-top:2px solid var(--ink);padding-top:10px;margin-top:16px}
+.answer{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.answer input{flex:1;min-width:140px;background:#fffaf0;border:2px solid var(--ink);color:var(--ink);font:1.2rem var(--f-mono);padding:.4em .6em;border-radius:2px}
+.answer .btn{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.sheet .hints{margin-top:14px;display:grid;gap:8px}
+.sheet .hint{background:#efe4c6;border-left:4px solid var(--sodium);padding:8px 12px;font-size:.98rem}
+.sheet .row{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;margin-top:16px}
+.sheet .ghost{background:transparent;border:1px solid var(--ink);color:var(--ink);padding:.45em .9em;border-radius:2px;font:600 .9rem var(--f-body)}
+.sheet .fb{font:700 1rem var(--f-body);margin-top:8px;min-height:1.4em}
+.sheet .fb.bad{color:#a8321f} .sheet .fb.good{color:#24683f}
+.reveal{margin-top:16px;border:3px double var(--ink);padding:14px;text-align:center;display:none}
+.reveal.on{display:block;animation:pop .5s}
+.reveal b{display:block;font:900 5rem/1 var(--f-display);color:#a8321f}
+@keyframes pop{0%{transform:scale(.6);opacity:0}}
+.opts{display:grid;gap:6px;font-family:var(--f-mono);font-size:.95rem;margin:.6em 0}
+.opts div{background:#f4eedd;padding:6px 10px;border:1px solid #c4b68e;overflow-wrap:anywhere}
+.comp{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin:.6em 0}
+.comp div{background:#f4eedd;border:1px solid #c4b68e;padding:8px 10px;font-size:.95rem}
+.sheet svg{width:100%;max-width:100%;height:auto;display:block}
+
+/* victoire */
+.win{position:fixed;inset:0;z-index:60;background:#05070a;display:none;align-items:center;justify-content:center;padding:24px max(16px,env(safe-area-inset-right,0px)) 24px max(16px,env(safe-area-inset-left,0px));overflow:hidden}
+.win.on{display:flex}
+.leaf{position:absolute;top:0;bottom:0;width:50%;background:repeating-linear-gradient(0deg,#2a323b 0 38px,#232a32 38px 40px);transition:transform 2.4s cubic-bezier(.6,0,.2,1);z-index:2;border:1px solid #3a4652}
+.leaf.l{left:0}.leaf.r{right:0}
+.win.open .leaf.l{transform:translateX(-102%)}.win.open .leaf.r{transform:translateX(102%)}
+.wincontent{position:relative;z-index:1;text-align:center;max-width:720px;display:grid;gap:14px}
+.wincontent h2{font:900 clamp(3rem,10vw,6.5rem)/.9 var(--f-display);text-transform:uppercase;color:var(--ok)}
+.wincontent .code{font:600 1.3rem var(--f-mono);background:var(--wall);border:1px solid var(--line);padding:12px;letter-spacing:.06em;overflow-wrap:anywhere}
+.sweets{color:var(--sodium);font:1.15rem var(--f-type)}
+
+/* coin du prof */
+.corner{max-width:860px;margin:40px auto;display:grid;gap:16px}
+.corner h2{font:900 2.4rem var(--f-display);text-transform:uppercase}
+.pcontent{background:var(--wall);border:1px solid var(--line);border-radius:6px;padding:22px;line-height:1.6}
+.pcontent h3{font:800 1.5rem var(--f-display);text-transform:uppercase;letter-spacing:.03em;margin:22px 0 8px;color:var(--sodium)}
+.pcontent h3:first-child{margin-top:0}
+.pcontent table{border-collapse:collapse;width:100%;font-size:.95rem}
+.pcontent th,.pcontent td{border:1px solid var(--line);padding:6px 9px;text-align:left;vertical-align:top}
+.pcontent th{background:var(--wall2)}
+.pcontent code{font-family:var(--f-mono);color:var(--sodium)}
+
+@media (max-width:860px){
+  .hero,.orena,.door,.intro{grid-template-columns:1fr}
+  .board{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .lockers{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .orena .screen{max-width:200px}
+}
+@media (max-width:460px){
+  .board{grid-template-columns:1fr}
+  .teams{grid-template-columns:repeat(2,1fr)}
+  .slots span{width:26px;height:34px;font-size:1.2rem}
+  .sheet h2{padding-right:0;margin-top:36px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+
+<!-- ================= ACCUEIL ================= -->
+<section id="home" class="view on">
+  <div class="wrap">
+    <div class="hero">
+      <div>
+        <div class="date">ANNÉE 2053 · INTERNET HORS SERVICE</div>
+        <h1>Le Bunker <span>d'Orena</span></h1>
+        <p style="margin-top:18px">Le virus Curare a éteint tous les appareils connectés. Les robots Nox traquent ceux qui savent encore comment marche l'informatique. Sous la maison d'Orena Gapuissi, une pièce piégée garde, sur papier, ce que l'humanité a oublié. Vous avez une heure avant l'arrivée des Antitek.</p>
+      </div>
+      <div class="tape">
+        Escape game SNT · 6 binômes · 60 min<br>
+        8 casiers, 8 thèmes : Internet, Web, réseaux sociaux, données, localisation, photographie, objets connectés, Python.<br>
+        Porte de sortie : au moins 6 casiers ouverts.<br>
+        Les 8 casiers : réserve de friandises.
+      </div>
+    </div>
+    <div class="choices">
+      <button class="choice prof" id="goProj"><b>Écran de projection</b><span>Pour le professeur, au vidéoprojecteur : mise en scène, message d'Orena, musique, compte à rebours et tableau des 6 binômes.</span></button>
+      <button class="choice team" id="goTeam"><b>Poste d'un binôme</b><span>Un ordinateur ou une tablette par binôme : les 8 casiers, les indices et la porte de sortie.</span></button>
+      <button class="choice corner" id="goCorner"><b>Coin du professeur</b><span>Déroulé, corrigé et conseils, protégés par mot de passe.</span></button>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PROJECTION ================= -->
+<section id="proj" class="view">
+  <div class="wrap">
+    <div class="ptop">
+      <h2>Bunker d'Orena · Salle de contrôle</h2>
+      <div class="tools">
+        <button class="btn small" id="pHome">Accueil</button>
+        <button class="btn small" id="pFull">Plein écran</button>
+      </div>
+    </div>
+    <div class="clock" id="pClock">60:00</div>
+    <div class="cap" id="pCap">Les Antitek arrivent dans</div>
+    <div class="radar"><i id="pRadar"></i></div>
+    <div class="road"><span>BASE ANTITEK</span><span>ROUTE</span><span>MAISON D'ORENA</span></div>
+    <div class="banner" id="pBanner"></div>
+    <div class="board" id="board"></div>
+    <div class="podium" id="podium"><div class="label">Ordre de sortie du bunker</div><ol id="podList"></ol></div>
+    <div class="controls">
+      <button class="btn hot" id="pIntro">Lancer la mission (avec le message d'Orena)</button>
+      <button class="btn amber" id="pStart">Démarrer le chrono</button>
+      <button class="btn" id="pPause">Pause</button>
+      <button class="btn" id="pPlus">+ 5 min</button>
+      <button class="btn" id="pMinus">− 1 min</button>
+      <button class="btn" id="pMusic">Musique : coupée</button>
+      <label class="vol" for="pVol">Volume <input type="range" id="pVol" min="0" max="100" value="70"></label>
+      <button class="btn" id="pVoice" aria-pressed="true">Voix d'Orena : oui</button>
+      <button class="btn" id="pReset">Réinitialiser</button>
+    </div>
+    <p id="pResetConfirm" class="msg bad" hidden>Cliquez encore une fois sur « Réinitialiser » pour tout remettre à zéro.</p>
+  </div>
+</section>
+
+<!-- mise en scène -->
+<div class="stage" id="stage">
+  <canvas id="noise" width="160" height="90"></canvas>
+  <div class="scene" id="scene"></div>
+  <button class="btn small skip" id="skip">Passer la mise en scène</button>
+</div>
+
+<!-- ================= ÉQUIPE ================= -->
+<section id="team" class="view">
+  <div class="wrap">
+    <div id="signup" class="signup">
+      <div class="label">Identification de la cellule</div>
+      <h2>Quelle cellule de la Résistance êtes-vous ?</h2>
+      <div class="teams" id="teamPick"></div>
+      <div class="field"><label class="label" for="n1">Prénom 1</label><input id="n1" autocomplete="off" maxlength="30"></div>
+      <div class="field"><label class="label" for="n2">Prénom 2</label><input id="n2" autocomplete="off" maxlength="30"></div>
+      <div class="msg bad" id="signMsg"></div>
+      <div class="tools">
+        <button class="btn amber" id="enter">Entrer dans le bunker</button>
+        <button class="btn" id="tBack">Retour</button>
+      </div>
+    </div>
+
+    <div id="game" hidden>
+      <div class="thead">
+        <div class="who" id="who">—</div>
+        <div class="slots" id="slots" aria-label="Lettres du mot de passe"></div>
+        <div style="text-align:right"><div class="tclock" id="tClock">60:00</div><div class="label" id="tPen">0 indice</div></div>
+      </div>
+      <div class="intro">
+        <p>Chaque casier contient une fiche d'Orena. Résolvez-la : vous obtenez une lettre et sa place dans le mot qui ouvre la porte. La porte accepte le mot seulement si au moins 6 casiers sont ouverts. Un indice coûte 2 minutes de pénalité.</p>
+        <div class="tools"><button class="btn small" id="tMusic">Musique : coupée</button><button class="btn small" id="tFull">Plein écran</button></div>
+      </div>
+      <div class="lockers" id="lockers"></div>
+      <div class="door">
+        <div>
+          <h3>Porte blindée</h3>
+          <p id="doorInfo">0 casier ouvert sur 8. Il en faut au moins 6.</p>
+          <div class="msg" id="doorMsg"></div>
+        </div>
+        <form id="doorForm" autocomplete="off">
+          <label class="label" for="pass" style="flex-basis:100%">Mot de passe (8 lettres)</label>
+          <input id="pass" maxlength="12" spellcheck="false">
+          <button class="btn hot">Ouvrir</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sheetbg" id="sheetbg" role="dialog" aria-modal="true">
+  <article class="sheet" id="sheet"></article>
+</div>
+
+<div class="win" id="win">
+  <div class="leaf l"></div><div class="leaf r"></div>
+  <div class="wincontent">
+    <div class="label">Porte déverrouillée</div>
+    <h2>Évadés !</h2>
+    <p id="winTxt"></p>
+    <div class="code" id="winCode"></div>
+    <p class="sweets" id="winSweets"></p>
+    <div class="tools" style="justify-content:center"><button class="btn" id="winBack">Revenir dans le bunker</button></div>
+  </div>
+</div>
+
+<!-- ================= COIN DU PROF ================= -->
+<section id="cornerV" class="view">
+  <div class="corner">
+    <div class="label">Accès réservé</div>
+    <h2>Coin du professeur</h2>
+    <form id="profForm" class="tools" autocomplete="off">
+      <label class="label" for="profPw" style="flex-basis:100%">Mot de passe enseignant</label>
+      <input id="profPw" type="password" style="background:var(--wall);border:1px solid var(--line);color:var(--text);padding:.6em .8em;border-radius:4px;font:inherit">
+      <button class="btn amber">Ouvrir</button>
+      <button class="btn" type="button" id="cBack">Accueil</button>
+    </form>
+    <div class="msg bad" id="profMsg"></div>
+    <div class="pcontent" id="pcontent" hidden></div>
+  </div>
+</section>
+
+<script>
+"use strict";
+/* ================= DONNÉES ================= */
+const DATA = {"enigmes": [{"id": "internet", "theme": "Internet", "titre": "Le routeur fantôme", "pos": 2, "type": "num", "ph": "un nombre", "html": "<p>Note d'Orena : « Le dernier routeur encore debout a pour adresse <code>192.168.0.X</code>. J'ai écrit X en binaire pour que les Nox ne puissent pas le lire. »</p>\n<pre>X = 0010 1101</pre>\n<div class=\"tblwrap\"><table><tr><th>Bit</th><td>128</td><td>64</td><td>32</td><td>16</td><td>8</td><td>4</td><td>2</td><td>1</td></tr></table></div>\n<p>Une adresse IPv4 est formée de 4 octets. Chaque octet vaut entre 0 et 255.</p>", "q": "Quelle est la valeur de X en décimal ?", "hints": ["Chaque 1 vaut le nombre écrit au-dessus de lui. Les 0 ne comptent pas.", "Les 1 sont placés sous 32, 8, 4 et 1. Additionnez."], "h": "62a6f1dfcbd4648ddc5815731acadf121b0144ca3dc1993b24174290edb273c9", "k": 22}, {"id": "web", "theme": "Le Web", "titre": "La vraie adresse", "pos": 6, "type": "txt", "ph": "A, B, C ou D", "html": "<p>Les Antitek ont semé de fausses pages. Orena a laissé ce mot : « Ma page d'archives utilise une connexion chiffrée et son nom de domaine est exactement <code>resistance.yt</code>. »</p>\n<div class=\"opts\"><div>A · http://resistance.yt.antitek.com/archives</div><div>B · https://resistance.yt/archives</div><div>C · https://resistance-yt.com/archives</div><div>D · http://resistance.yt/archives</div></div>\n<p>Rappel : une URL se lit <code>protocole://nom-de-domaine/chemin</code>.</p>", "q": "Quelle adresse est vraiment celle d'Orena ? Répondez par la lettre.", "hints": ["Le s de https indique que la connexion est chiffrée. Deux adresses sont éliminées.", "Dans l'adresse A, le nom de domaine se termine par antitek.com : resistance.yt n'est qu'un sous-domaine piégé."], "h": "7168fd8b2859bf2a16c9282155d74c3eec421619be2e2be3bbfef25e0de4a0ad", "k": 17}, {"id": "reseaux", "theme": "Réseaux sociaux", "titre": "L'infiltré", "pos": 3, "type": "txt", "ph": "un prénom", "html": "<p>La Résistance a intercepté les échanges de messages entre huit personnes. Un trait relie deux personnes qui s'écrivent.</p><svg viewBox=\"0 0 440 310\" role=\"img\" aria-label=\"Graphe des échanges de messages\">\n<g stroke=\"#2b261d\" stroke-width=\"2\">\n<line x1=\"60\" y1=\"70\" x2=\"60\" y2=\"225\"/><line x1=\"60\" y1=\"70\" x2=\"185\" y2=\"60\"/><line x1=\"60\" y1=\"225\" x2=\"205\" y2=\"270\"/>\n<line x1=\"185\" y1=\"60\" x2=\"335\" y2=\"45\"/><line x1=\"185\" y1=\"60\" x2=\"190\" y2=\"165\"/><line x1=\"185\" y1=\"60\" x2=\"315\" y2=\"165\"/>\n<line x1=\"335\" y1=\"45\" x2=\"315\" y2=\"165\"/><line x1=\"190\" y1=\"165\" x2=\"315\" y2=\"165\"/><line x1=\"315\" y1=\"165\" x2=\"390\" y2=\"260\"/>\n<line x1=\"390\" y1=\"260\" x2=\"205\" y2=\"270\"/><line x1=\"315\" y1=\"165\" x2=\"205\" y2=\"270\"/>\n</g>\n<g font-family=\"Special Elite, Courier New, monospace\" font-size=\"14\" text-anchor=\"middle\" fill=\"#2b261d\">\n<circle cx=\"60\" cy=\"70\" r=\"33\" fill=\"#f4eedd\" stroke=\"#2b261d\" stroke-width=\"2\"/><text x=\"60\" y=\"75\">Lessia</text><circle cx=\"60\" cy=\"225\" r=\"33\" fill=\"#f4eedd\" stroke=\"#2b261d\" stroke-width=\"2\"/><text x=\"60\" y=\"230\">Aaros</text><circle cx=\"185\" cy=\"60\" r=\"33\" fill=\"#f4eedd\" stroke=\"#2b261d\" stroke-width=\"2\"/><text x=\"185\" y=\"65\">Bacar</text><circle cx=\"335\" cy=\"45\" r=\"33\" fill=\"#f4eedd\" stroke=\"#2b261d\" stroke-width=\"2\"/><text x=\"335\" y=\"50\">Faïza</text><circle cx=\"190\" cy=\"165\" r=\"33\" fill=\"#f4eedd\" stroke=\"#2b261d\" stroke-width=\"2\"/><text x=\"190\" y=\"170\">Naïma</text><circle cx=\"315\" cy=\"165\" r=\"33\" fill=\"#f4eedd\" stroke=\"#2b261d\" stroke-width=\"2\"/><text x=\"315\" y=\"170\">Zaïd</text><circle cx=\"390\" cy=\"260\" r=\"33\" fill=\"#f4eedd\" stroke=\"#2b261d\" stroke-width=\"2\"/><text x=\"390\" y=\"265\">Soilihi</text><circle cx=\"205\" cy=\"270\" r=\"33\" fill=\"#f4eedd\" stroke=\"#2b261d\" stroke-width=\"2\"/><text x=\"205\" y=\"275\">Mariama</text></g></svg>\n<p>Orena avait prévenu : « L'informateur des Antitek est celui qui est en contact avec le plus de personnes. En théorie des graphes, on appelle ce nombre le <em>degré</em> d'un sommet. »</p>", "q": "Quel est le prénom de l'infiltré ?", "hints": ["Pour chaque personne, comptez les traits qui partent de son cercle.", "L'infiltré a 5 contacts."], "h": "79fe3eda6533d26eca477138d84452ee6fc0f40d666b99a3b5a4dc9b31ce4dd6", "k": 11}, {"id": "donnees", "theme": "Données structurées", "titre": "Les Nox affaiblis", "pos": 5, "type": "num", "ph": "un nombre", "html": "<p>Fichier <code>nox.csv</code> récupéré sur une carte mémoire. Orena veut attaquer les Nox de la zone Nord qui sont actifs mais dont la batterie est faible.</p>\n<div class=\"tblwrap\"><table><tr><th>id</th><th>zone</th><th>batterie (%)</th><th>statut</th></tr>\n<tr><td>NX-01</td><td>Nord</td><td>35</td><td>actif</td></tr><tr><td>NX-02</td><td>Sud</td><td>20</td><td>actif</td></tr>\n<tr><td>NX-03</td><td>Nord</td><td>55</td><td>actif</td></tr><tr><td>NX-04</td><td>Nord</td><td>12</td><td>veille</td></tr>\n<tr><td>NX-05</td><td>Centre</td><td>30</td><td>actif</td></tr><tr><td>NX-06</td><td>Nord</td><td>38</td><td>actif</td></tr>\n<tr><td>NX-07</td><td>Nord</td><td>40</td><td>actif</td></tr><tr><td>NX-08</td><td>Sud</td><td>10</td><td>veille</td></tr>\n<tr><td>NX-09</td><td>Nord</td><td>5</td><td>actif</td></tr><tr><td>NX-10</td><td>Centre</td><td>70</td><td>actif</td></tr></table></div>\n<p>Filtre demandé : <code>zone = \"Nord\"</code> ET <code>batterie &lt; 40</code> ET <code>statut = \"actif\"</code>.</p>", "q": "Combien de Nox correspondent aux trois critères ?", "hints": ["Appliquez les filtres un par un : d'abord la zone, puis la batterie, puis le statut.", "Attention : 40 n'est pas strictement inférieur à 40."], "h": "cd5ad1bb99ed85cd85b2cf1678692bacba3ff086cab3ec22b075d726c84daefe", "k": 16}, {"id": "localisation", "theme": "Localisation", "titre": "Le point de rendez-vous", "pos": 1, "type": "txt", "ph": "un lieu", "html": "<p>Le GPS d'un vieux bateau a enregistré cette trame NMEA juste avant la panne :</p>\n<pre>$GPGGA,091500,1246.80,S,04513.80,E,1,08,0.9,12.0,M,,,,*47</pre>\n<p><code>1246.80,S</code> signifie 12° 46,80′ Sud. <code>04513.80,E</code> signifie 45° 13,80′ Est. Pour obtenir des degrés décimaux : degrés + minutes ÷ 60. Au Sud, la latitude est négative.</p>\n<div class=\"tblwrap\"><table><tr><th>Lieu (Mayotte)</th><th>latitude</th><th>longitude</th></tr>\n<tr><td>Dzaoudzi</td><td>−12,788</td><td>45,282</td></tr><tr><td>Sada</td><td>−12,850</td><td>45,104</td></tr>\n<tr><td>Mamoudzou</td><td>−12,780</td><td>45,230</td></tr><tr><td>Mtsamboro</td><td>−12,700</td><td>45,069</td></tr></table></div>", "q": "Dans quelle commune se trouve le point de rendez-vous ?", "hints": ["46,80 ÷ 60 = 0,78. La latitude vaut donc −12,78.", "13,80 ÷ 60 = 0,23. La longitude vaut 45,23."], "h": "0f112be62b5a29b4d0400fd1338d3d60415854ed6d3262e7043716914dd92a67", "k": 0}, {"id": "photo", "theme": "Photographie numérique", "titre": "Le plan dans l'image", "pos": 8, "type": "num", "ph": "un nombre de Mo", "html": "<p>Orena a caché le plan de la porte dans une photo non compressée de <strong>4 000 × 3 000 pixels</strong>. Chaque pixel est codé en RVB : 1 octet pour le rouge, 1 pour le vert, 1 pour le bleu.</p>\n<p>Les Antitek ne laissent sortir de la maison que les clés USB de 32 Mo. Avant de copier la photo, il faut connaître sa taille.</p>", "q": "Quelle est la taille du fichier, en mégaoctets ? (1 Mo = 1 000 000 octets)", "hints": ["Nombre de pixels = largeur × hauteur. Un pixel RVB occupe 3 octets.", "4 000 × 3 000 = 12 000 000 pixels. Multipliez par 3, puis divisez par 1 000 000."], "h": "283ea458c4d8999900705efdaef73a362a06227fa242ed8d96c6784d65885989", "k": 9}, {"id": "objets", "theme": "Objets connectés", "titre": "Le Nox démonté", "pos": 7, "type": "num", "ph": "un nombre", "html": "<p>La Résistance a démonté un Nox abattu. Voici ses composants :</p>\n<div class=\"comp\"><div>Caméra</div><div>Moteur des roues</div><div>Haut-parleur</div><div>Capteur infrarouge</div><div>Gyrophare à LED</div><div>Microphone</div><div>Pince motorisée</div><div>Thermomètre</div></div>\n<p>Orena : « Un <em>capteur</em> mesure une grandeur du monde réel. Un <em>actionneur</em> agit sur le monde : il bouge, éclaire, émet un son. Pour neutraliser un Nox sans qu'il détecte rien, il faut couper ses actionneurs. »</p>", "q": "Combien de ces composants sont des actionneurs ?", "hints": ["La caméra, le microphone, le thermomètre et le capteur infrarouge mesurent : ce sont des capteurs.", "Il reste donc les composants qui bougent, éclairent ou font du bruit."], "h": "131b8ad93b67cd9b52a9608c9303abe91a498563ad71b8bce1d1ab7eab66b962", "k": 6}, {"id": "python", "theme": "Python", "titre": "Le code d'arrêt", "pos": 4, "type": "num", "ph": "un nombre", "html": "<p>Sur une feuille froissée, Orena a recopié le programme qui calcule le code d'arrêt d'urgence des Nox :</p>\n<pre>code = 3\nfor i in range(4):\n    code = code * 2 - 1\nprint(code)</pre>\n<p>Pas d'ordinateur : il faut exécuter le programme à la main, ligne par ligne.</p>", "q": "Quelle valeur ce programme affiche-t-il ?", "hints": ["range(4) fait tourner la boucle 4 fois (i vaut 0, puis 1, 2, 3).", "Premier tour : 3 × 2 − 1 = 5. Continuez avec 5."], "h": "b4a66393a9527810a2ea7b7e14055723014c3a935cf32e52f3e90999deda5b77", "k": 22}], "porte": "f1690e6e4116bbd28a991598ca0ff1385cc421ad231e5e11d668fc2d47b69eb7"};
+const PROF_BLOB = "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";
+const TEAMS = ["Kawéni","Combani","Dzaoudzi","Sada","Bandrélé","Mtsamboro"];
+const DURATION = 60*60*1000;
+const HINT_PEN = 2*60*1000;
+
+const $ = s => document.querySelector(s);
+const store = {
+  get(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } },
+  set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} },
+  del(k){ try{ localStorage.removeItem(k); }catch(e){} }
+};
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt = ms => { const t=Math.max(0,Math.ceil(ms/1000)); return String(Math.floor(t/60)).padStart(2,"0")+":"+String(t%60).padStart(2,"0"); };
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+
+async function sha(s){ const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)); return new Uint8Array(b); }
+const hex = u => Array.from(u, b=>b.toString(16).padStart(2,"0")).join("");
+function norm(s, type){
+  s = String(s||"").trim();
+  if(type==="num"){ const m = s.replace(/\s/g,"").match(/-?\d+(?:[.,]\d+)?/); if(!m) return ""; return String(parseFloat(m[0].replace(",","."))); }
+  return s.normalize("NFD").replace(/[̀-ͯ]/g,"").toUpperCase().replace(/[^A-Z0-9]/g,"");
+}
+
+/* ================= SON : musique d'infiltration originale (Web Audio) ================= */
+const Snd = {
+  ctx:null, on:false, intensity:1, bpm:138, step:0, next:0, timer:null, vol:.7, duck:1,
+  init(){
+    if(this.ctx) return true;
+    const AC = window.AudioContext||window.webkitAudioContext; if(!AC) return false;
+    const c = this.ctx = new AC();
+    this.comp = c.createDynamicsCompressor(); this.comp.threshold.value=-14; this.comp.connect(c.destination);
+    this.out = c.createGain(); this.out.gain.value = this.vol; this.out.connect(this.comp);
+    this.mus = c.createGain(); this.mus.gain.value = 1; this.mus.connect(this.out);
+    this.fx = c.createGain(); this.fx.gain.value = .9; this.fx.connect(this.out);
+    const len = c.sampleRate, buf = c.createBuffer(1,len,c.sampleRate), d = buf.getChannelData(0);
+    for(let i=0;i<len;i++) d[i]=Math.random()*2-1;
+    this.noiseBuf = buf; return true;
+  },
+  resume(){ if(this.init()) this.ctx.resume(); },
+  setVol(v){ this.vol=v; if(this.out) this.out.gain.setTargetAtTime(v,this.ctx.currentTime,.05); },
+  setDuck(v){ this.duck=v; if(this.mus) this.mus.gain.setTargetAtTime(v,this.ctx.currentTime,.25); },
+  f(m){ return 440*Math.pow(2,(m-69)/12); },
+  start(){ if(!this.init()) return; this.ctx.resume(); if(this.on) return; this.on=true; this.step=0; this.next=this.ctx.currentTime+.08; this.timer=setInterval(()=>this.tick(),25); },
+  stop(){ this.on=false; clearInterval(this.timer); },
+  tick(){ const c=this.ctx; const d=60/this.bpm/2; while(this.next < c.currentTime+.12){ this.play(this.step,this.next,d); this.next+=d; this.step++; } },
+  env(g,t,a,peak,dec){ g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(peak,t+a); g.gain.exponentialRampToValueAtTime(0.0001,t+a+dec); },
+  bass(m,t,d){ const c=this.ctx,o=c.createOscillator(),o2=c.createOscillator(),f=c.createBiquadFilter(),g=c.createGain();
+    o.type="sawtooth"; o2.type="square"; o.frequency.value=this.f(m); o2.frequency.value=this.f(m-12);
+    f.type="lowpass"; f.frequency.setValueAtTime(900,t); f.frequency.exponentialRampToValueAtTime(180,t+d); f.Q.value=6;
+    this.env(g,t,.005,.32,d); o.connect(f); o2.connect(f); f.connect(g); g.connect(this.mus); o.start(t); o2.start(t); o.stop(t+d+.05); o2.stop(t+d+.05); },
+  hat(t,v){ const c=this.ctx,s=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain(); s.buffer=this.noiseBuf; f.type="highpass"; f.frequency.value=7500; this.env(g,t,.001,v,.04); s.connect(f); f.connect(g); g.connect(this.mus); s.start(t,Math.random()*.5); s.stop(t+.08); },
+  snare(t,v){ const c=this.ctx,s=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain(); s.buffer=this.noiseBuf; f.type="bandpass"; f.frequency.value=1800; this.env(g,t,.001,v,.12); s.connect(f); f.connect(g); g.connect(this.mus); s.start(t,Math.random()*.5); s.stop(t+.2); },
+  kick(t){ const c=this.ctx,o=c.createOscillator(),g=c.createGain(); o.frequency.setValueAtTime(140,t); o.frequency.exponentialRampToValueAtTime(42,t+.18); this.env(g,t,.003,.9,.22); o.connect(g); g.connect(this.mus); o.start(t); o.stop(t+.3); },
+  tom(t,fr){ const c=this.ctx,o=c.createOscillator(),g=c.createGain(); o.type="triangle"; o.frequency.setValueAtTime(fr,t); o.frequency.exponentialRampToValueAtTime(fr*.7,t+.15); this.env(g,t,.002,.45,.16); o.connect(g); g.connect(this.mus); o.start(t); o.stop(t+.25); },
+  stab(ns,t,d){ const c=this.ctx,f=c.createBiquadFilter(),g=c.createGain(); f.type="lowpass"; f.frequency.setValueAtTime(3200,t); f.frequency.exponentialRampToValueAtTime(600,t+d); f.Q.value=2;
+    this.env(g,t,.012,.16,d); f.connect(g); g.connect(this.mus);
+    ns.forEach(m=>[-7,7].forEach(dt=>{ const o=c.createOscillator(); o.type="sawtooth"; o.frequency.value=this.f(m); o.detune.value=dt; o.connect(f); o.start(t); o.stop(t+d+.1); })); },
+  lead(m,t,d){ const c=this.ctx,o=c.createOscillator(),lfo=c.createOscillator(),lg=c.createGain(),g=c.createGain(),f=c.createBiquadFilter();
+    o.type="sawtooth"; o.frequency.value=this.f(m); lfo.frequency.value=11; lg.gain.value=.05; lfo.connect(lg); lg.connect(g.gain);
+    f.type="lowpass"; f.frequency.value=2600; g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(.07,t+.3); g.gain.setValueAtTime(.07,t+d-.2); g.gain.linearRampToValueAtTime(0.0001,t+d);
+    o.connect(f); f.connect(g); g.connect(this.mus); o.start(t); lfo.start(t); o.stop(t+d); lfo.stop(t+d); },
+  drone(t,d){ const c=this.ctx,o=c.createOscillator(),g=c.createGain(); o.type="sine"; o.frequency.value=this.f(26); g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(.25,t+.5); g.gain.linearRampToValueAtTime(0.0001,t+d); o.connect(g); g.connect(this.mus); o.start(t); o.stop(t+d); },
+  /* mesure à 5 temps (10 croches), groupée 3+3+2+2 */
+  play(s,t,d){
+    const bar=Math.floor(s/10), i=s%10, I=this.intensity;
+    const A=[38,0,38,0,41,0,38,0,36,37], B=[38,0,38,0,43,0,41,0,40,39], C=[38,0,38,0,45,0,44,0,43,41];
+    const pat = (I>=2 && bar%4===3) ? C : (bar%2 ? B : A);
+    if(I===0){ if(i===0 && bar%2===0) this.drone(t,d*20); if(i===0||i===6) this.tom(t,90); this.hat(t,i%2?0.03:0.06); if(bar>=2 && pat[i]) this.bass(pat[i],t,d*.8); return; }
+    if(pat[i]) this.bass(pat[i],t,d*.85);
+    this.hat(t, i%2===0 ? .11 : .05);
+    if(i===0||i===3||i===6) this.kick(t);
+    if(i===8||i===9) this.tom(t, i===8?196:147);
+    if(bar%4===0 && (i===0||i===3)) this.stab(i===0?[62,65,69]:[63,67,70],t,d*1.5);
+    if(bar%4===2 && i===6) this.stab([61,65,68],t,d*3);
+    if(I>=2){
+      if(i===0){ const L=[74,77,76,73,74,79,78,77]; this.lead(L[bar%8],t,d*10); }
+      if(i===7||i===9) this.snare(t,.12);
+      if(bar%4===3 && i>=6) this.snare(t,.06+i*.01);
+    }
+  },
+  /* effets */
+  fxBeep(fr,t,d,type,v){ const c=this.ctx,o=c.createOscillator(),g=c.createGain(); o.type=type||"square"; o.frequency.value=fr; this.env(g,t,.005,v||.12,d); o.connect(g); g.connect(this.fx); o.start(t); o.stop(t+d+.05); },
+  success(){ if(!this.init()) return; this.ctx.resume(); const t=this.ctx.currentTime; [62,65,69,74].forEach((m,k)=>this.fxBeep(this.f(m+12),t+k*.08,.18,"square",.1)); },
+  error(){ if(!this.init()) return; this.ctx.resume(); const c=this.ctx,t=c.currentTime,o=c.createOscillator(),g=c.createGain(); o.type="sawtooth"; o.frequency.setValueAtTime(140,t); o.frequency.linearRampToValueAtTime(70,t+.35); this.env(g,t,.005,.22,.38); o.connect(g); g.connect(this.fx); o.start(t); o.stop(t+.45); },
+  siren(n){ if(!this.init()) return; this.ctx.resume(); const c=this.ctx,t=c.currentTime,o=c.createOscillator(),g=c.createGain(); o.type="triangle";
+    for(let k=0;k<n;k++){ o.frequency.setValueAtTime(560,t+k*.9); o.frequency.linearRampToValueAtTime(1150,t+k*.9+.45); o.frequency.linearRampToValueAtTime(560,t+k*.9+.9); }
+    g.gain.setValueAtTime(.0001,t); g.gain.linearRampToValueAtTime(.16,t+.1); g.gain.setValueAtTime(.16,t+n*.9-.1); g.gain.linearRampToValueAtTime(.0001,t+n*.9);
+    o.connect(g); g.connect(this.fx); o.start(t); o.stop(t+n*.9+.05); },
+  tickSnd(){ if(!this.ctx) return; this.fxBeep(1600,this.ctx.currentTime,.03,"square",.06); },
+  key(){ if(!this.ctx) return; const c=this.ctx,t=c.currentTime,s=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain(); s.buffer=this.noiseBuf; f.type="bandpass"; f.frequency.value=2500+Math.random()*1500; this.env(g,t,.001,.08,.02); s.connect(f); f.connect(g); g.connect(this.fx); s.start(t,Math.random()*.5); s.stop(t+.04); },
+  static(d){ if(!this.init()) return; const c=this.ctx,t=c.currentTime,s=c.createBufferSource(),g=c.createGain(); s.buffer=this.noiseBuf; s.loop=true; g.gain.setValueAtTime(.12,t); g.gain.linearRampToValueAtTime(.0001,t+d); s.connect(g); g.connect(this.fx); s.start(t); s.stop(t+d); },
+  door(){ if(!this.init()) return; this.ctx.resume(); const c=this.ctx,t=c.currentTime; this.kick(t); const o=c.createOscillator(),g=c.createGain(),f=c.createBiquadFilter(); o.type="sawtooth"; o.frequency.setValueAtTime(55,t); o.frequency.linearRampToValueAtTime(40,t+2.2); f.type="lowpass"; f.frequency.value=300; g.gain.setValueAtTime(.0001,t); g.gain.linearRampToValueAtTime(.3,t+.3); g.gain.linearRampToValueAtTime(.0001,t+2.4); o.connect(f); f.connect(g); g.connect(this.fx); o.start(t); o.stop(t+2.5); setTimeout(()=>this.success(),2300); }
+};
+
+/* ================= NAVIGATION ================= */
+function show(id){ document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on", v.id===id)); window.scrollTo(0,0); }
+$("#goProj").onclick = ()=>{ show("proj"); Proj.render(); };
+$("#goTeam").onclick = ()=>{ show("team"); Team.open(); };
+$("#goCorner").onclick = ()=>show("cornerV");
+$("#pHome").onclick = ()=>show("home");
+$("#tBack").onclick = ()=>show("home");
+$("#cBack").onclick = ()=>show("home");
+function fullscreen(){ const el=document.documentElement; try{ if(document.fullscreenElement) document.exitFullscreen(); else el.requestFullscreen && el.requestFullscreen().catch(()=>{}); }catch(e){} }
+$("#pFull").onclick = fullscreen; $("#tFull").onclick = fullscreen;
+
+/* ================= PROJECTION ================= */
+const EVENTS = [
+  {at:45, txt:"Un drone Nox survole la maison. Parlez moins fort.", siren:0},
+  {at:30, txt:"Mi-temps. Les Antitek ont fait la moitié de la route.", siren:1},
+  {at:15, txt:"Les phares des Antitek sont visibles sur la route de Combani.", siren:1},
+  {at:10, txt:"Dix minutes. Ils coupent le courant du quartier.", siren:2, intens:2},
+  {at:5,  txt:"ALERTE ROUGE : moteurs entendus devant la maison.", siren:3},
+  {at:1,  txt:"Dernière minute. Tapez le mot de passe, maintenant.", siren:2},
+  {at:0,  txt:"Les Antitek sont là. Le bunker est verrouillé de l'extérieur.", siren:4}
+];
+const Proj = {
+  s: null,
+  load(){ this.s = store.get("bunker_proj") || {remaining:DURATION, running:false, endAt:0, fired:[], teams:TEAMS.map(n=>({n, k:0, out:null})), music:false, voice:true, vol:70}; },
+  save(){ store.set("bunker_proj", this.s); },
+  remaining(){ return this.s.running ? this.s.endAt - Date.now() : this.s.remaining; },
+  render(){
+    const b = $("#board"); b.innerHTML = "";
+    this.s.teams.forEach((t,ix)=>{
+      const c = document.createElement("div"); c.className = "tcard"+(t.out?" out":"");
+      c.innerHTML = `<h3>${esc(t.n)}<small>${t.out?"SORTIE "+t.out:""}</small></h3>
+        <div class="pips">${Array.from({length:8},(_,k)=>`<i class="${k<t.k?"f":""}"></i>`).join("")}</div>
+        <div class="trow"><button class="btn small" data-a="m">−</button><span class="label">${t.k}/8 casiers</span><button class="btn small" data-a="p">+</button>
+        <button class="btn small ${t.out?"":"amber"}" data-a="o" style="margin-left:auto">${t.out?"Annuler":"Évadée"}</button></div>`;
+      c.querySelectorAll("button").forEach(btn=>btn.onclick=()=>{
+        const a=btn.dataset.a;
+        if(a==="p") t.k=Math.min(8,t.k+1);
+        if(a==="m") t.k=Math.max(0,t.k-1);
+        if(a==="o"){ if(t.out){ t.out=null; } else { t.out = fmt(DURATION - this.remaining()); Snd.door(); } }
+        this.save(); this.render();
+      });
+      b.appendChild(c);
+    });
+    const outs = this.s.teams.filter(t=>t.out).sort((a,b)=>a.out.localeCompare(b.out));
+    $("#podium").classList.toggle("on", outs.length>0);
+    $("#podList").innerHTML = outs.map((t,i)=>`<li><b>${i+1}</b><span>${esc(t.n)} · ${t.k}/8 casiers</span><span>${t.out}</span></li>`).join("");
+    $("#pMusic").textContent = "Musique : "+(Snd.on?"en marche":"coupée");
+    $("#pVoice").textContent = "Voix d'Orena : "+(this.s.voice?"oui":"non");
+    $("#pPause").textContent = this.s.running ? "Pause" : "Reprendre";
+    $("#pVol").value = this.s.vol;
+    this.tick();
+  },
+  tick(){
+    const r = this.remaining(); const el=$("#pClock");
+    el.textContent = fmt(r);
+    el.classList.toggle("warn", r<=15*60000 && r>5*60000);
+    el.classList.toggle("red", r<=5*60000);
+    $("#pRadar").style.width = (100*(1-r/DURATION)).toFixed(2)+"%";
+    if(this.s.running){
+      const min = r/60000;
+      EVENTS.forEach(ev=>{ if(min<=ev.at && !this.s.fired.includes(ev.at)){ this.s.fired.push(ev.at); this.save(); this.event(ev); } });
+      if(r<=60000 && r>0){ const sec=Math.ceil(r/1000); if(sec!==this._lastSec){ this._lastSec=sec; Snd.tickSnd(); } }
+      if(r<=0){ this.s.running=false; this.s.remaining=0; this.save(); $("#pCap").textContent="Temps écoulé"; this.render(); }
+    }
+  },
+  event(ev){
+    const b=$("#pBanner"); b.textContent=ev.txt; b.classList.remove("on"); void b.offsetWidth; b.classList.add("on");
+    if(ev.siren) Snd.siren(ev.siren);
+    if(ev.intens){ Snd.intensity=2; Snd.bpm=150; }
+    if(this.s.voice && "speechSynthesis" in window){ say(ev.txt, 1.05); }
+  },
+  startClock(){
+    if(this.s.running) return;
+    this.s.endAt = Date.now()+this.s.remaining; this.s.running=true; this.save();
+    Snd.intensity = this.s.remaining<=10*60000 ? 2 : 1; Snd.bpm = Snd.intensity===2?150:138;
+    if(!Snd.on){ Snd.start(); } $("#pCap").textContent="Les Antitek arrivent dans"; this.render();
+  }
+};
+Proj.load();
+setInterval(()=>{ if($("#proj").classList.contains("on")) Proj.tick(); },250);
+
+$("#pStart").onclick = ()=>{ Snd.resume(); Proj.startClock(); };
+$("#pPause").onclick = ()=>{ const s=Proj.s; if(s.running){ s.remaining=Proj.remaining(); s.running=false; } else if(s.remaining>0){ s.endAt=Date.now()+s.remaining; s.running=true; } Proj.save(); Proj.render(); };
+$("#pPlus").onclick = ()=>{ const s=Proj.s; if(s.running) s.endAt+=5*60000; else s.remaining+=5*60000; s.fired = s.fired.filter(a=>a*60000 < Proj.remaining()); Proj.save(); Proj.render(); };
+$("#pMinus").onclick = ()=>{ const s=Proj.s; if(s.running) s.endAt-=60000; else s.remaining=Math.max(0,s.remaining-60000); Proj.save(); Proj.render(); };
+$("#pMusic").onclick = ()=>{ Snd.resume(); if(Snd.on) Snd.stop(); else { Snd.intensity = Proj.remaining()<=10*60000?2:1; Snd.start(); } Proj.render(); };
+$("#pVol").oninput = e=>{ Proj.s.vol=+e.target.value; Snd.setVol(Proj.s.vol/100); Proj.save(); };
+$("#pVoice").onclick = ()=>{ Proj.s.voice=!Proj.s.voice; Proj.save(); Proj.render(); };
+let resetArmed=false;
+$("#pReset").onclick = ()=>{
+  if(!resetArmed){ resetArmed=true; $("#pResetConfirm").hidden=false; setTimeout(()=>{resetArmed=false; $("#pResetConfirm").hidden=true;},4000); return; }
+  resetArmed=false; $("#pResetConfirm").hidden=true; Snd.stop(); Snd.intensity=1; Snd.bpm=138; store.del("bunker_proj"); Proj.load(); $("#pBanner").classList.remove("on"); $("#pCap").textContent="Les Antitek arrivent dans"; Proj.render();
+};
+
+/* ---------- voix ---------- */
+let frVoice=null;
+function pickVoice(){ if(!("speechSynthesis" in window)) return; const v=speechSynthesis.getVoices(); frVoice = v.find(x=>/fr[-_]FR/i.test(x.lang) && /female|femme|amelie|audrey|marie|julie|google/i.test(x.name)) || v.find(x=>/^fr/i.test(x.lang)) || null; }
+if("speechSynthesis" in window){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+function say(text, rate){
+  return new Promise(res=>{
+    if(!("speechSynthesis" in window)) return res();
+    try{
+      speechSynthesis.cancel();
+      const u=new SpeechSynthesisUtterance(text); u.lang="fr-FR"; if(frVoice) u.voice=frVoice; u.rate=rate||.95; u.pitch=.95;
+      let done=false; const fin=()=>{ if(!done){done=true;res();} };
+      u.onend=fin; u.onerror=fin; setTimeout(fin, 400 + text.length*95);
+      speechSynthesis.speak(u);
+    }catch(e){ res(); }
+  });
+}
+
+/* ---------- mise en scène ---------- */
+let skipping=false;
+const scene = $("#scene");
+async function typeIn(el, text, speed){
+  el.innerHTML=""; const span=document.createElement("span"); const cur=document.createElement("span"); cur.className="cur"; el.append(span,cur);
+  for(let i=0;i<text.length;i++){
+    if(skipping){ span.textContent=text; break; }
+    span.textContent += text[i]; if(text[i]!==" " && i%2===0) Snd.key();
+    await sleep(text[i]==="."||text[i]==="\n" ? speed*8 : speed);
+  }
+  cur.remove();
+}
+let noiseRAF=null;
+function noise(on){
+  const cv=$("#noise"); cv.style.opacity = on? ".35":"0";
+  if(!on){ cancelAnimationFrame(noiseRAF); return; }
+  const g=cv.getContext("2d"), img=g.createImageData(cv.width,cv.height);
+  const loop=()=>{ for(let i=0;i<img.data.length;i+=4){ const v=Math.random()*255|0; img.data[i]=img.data[i+1]=img.data[i+2]=v; img.data[i+3]=255; } g.putImageData(img,0,0); noiseRAF=requestAnimationFrame(loop); };
+  loop();
+}
+let waveRAF=null, talking=false;
+function wave(cv){
+  const g=cv.getContext("2d"); const W=cv.width=300, H=cv.height=400; let ph=0;
+  const loop=()=>{ g.fillStyle="#0c1114"; g.fillRect(0,0,W,H);
+    // silhouette
+    g.fillStyle="#1d2a31"; g.beginPath(); g.arc(W/2,150,62,0,Math.PI*2); g.fill(); g.fillRect(W/2-95,225,190,140); g.beginPath(); g.ellipse(W/2,235,95,40,0,0,Math.PI*2); g.fill();
+    for(let y=0;y<H;y+=4){ g.fillStyle="rgba(134,180,199,.05)"; g.fillRect(0,y,W,1); }
+    g.strokeStyle="#f0ae37"; g.lineWidth=2; g.beginPath();
+    for(let x=0;x<W;x+=3){ const a = talking ? (18+Math.random()*22) : 2; const y=H-50+Math.sin(x*.07+ph)*a*Math.sin(x*.013+ph*.3); x?g.lineTo(x,y):g.moveTo(x,y); }
+    g.stroke(); ph+=.25; waveRAF=requestAnimationFrame(loop); };
+  loop();
+}
+const SCENARIO = "21 mars 2053.\nLe virus Curare, lancé par Maxime-Didier Kwinden, a éteint Internet et tous les appareils connectés.\nSes robots, les Nox, détruisent les centres de données et traquent ceux qui savent encore programmer.\nLes Antitek, ses partisans, les guident.\nToutes nos connaissances étaient numériques. Presque tout est perdu.\nPresque.";
+const LESSIA = "Lessia : « Entrez vite. Ma mère, Orena Gapuissi, a construit cette pièce sous la maison. Elle y a tout recopié sur papier. Elle a laissé un message pour vous. »";
+const ORENA = "Si vous voyez ce message, c'est que mes enfants vous ont ouvert la porte. Je suis Orena Gapuissi.\nAvant que Curare n'éteigne le monde, j'ai copié ici, sur papier, ce que nous savions de l'informatique.\nCette pièce est un piège. C'est aussi une école.\nHuit casiers, huit fiches. Chaque fiche résolue vous donne une lettre et sa place dans le mot qui ouvre la porte.\nLa porte ne s'ouvrira que si vous avez compris assez de choses pour aider la Résistance : six casiers au moins.\nCeux qui ouvriront les huit trouveront ma réserve de friandises.\nMais la maison est surveillée. La base Antitek la plus proche est à une heure d'ici.\nVotre mission, si vous l'acceptez : sortir vivants, avec le savoir.";
+async function intro(){
+  skipping=false; Snd.resume(); Snd.setVol(Proj.s.vol/100);
+  const st=$("#stage"); st.classList.add("on");
+  // 1. coupure
+  scene.innerHTML = `<div class="glitch">Connexion perdue</div><div class="sub">ERR_CURARE · 0 APPAREIL EN LIGNE</div>`;
+  noise(true); Snd.static(2.6); await sleep(skipping?0:2800); noise(false);
+  // 2. contexte
+  Snd.intensity=0; Snd.bpm=120; Snd.start();
+  scene.innerHTML = `<div class="label" style="color:var(--sodium)">Archives de la Résistance</div><div class="typed" id="ty"></div>`;
+  await typeIn($("#ty"), SCENARIO, 38); await sleep(skipping?0:1600);
+  // 3. Lessia
+  if(!skipping){ scene.innerHTML = `<div class="typed" id="ty"></div>`; await typeIn($("#ty"), LESSIA, 30); await sleep(1400); }
+  // 4. Orena
+  if(!skipping){
+    scene.innerHTML = `<div class="orena"><div class="screen"><span class="tag">ENREGISTREMENT</span><canvas id="wv"></canvas></div><div><div class="label" style="color:var(--sodium)">Message d'Orena Gapuissi · cassette n° 7</div><div class="typed dissolve" id="ty" style="font-size:clamp(1rem,1.8vw,1.3rem)"></div><div class="destruct" id="dest"></div></div></div>`;
+    wave($("#wv")); Snd.setDuck(.3); talking=true;
+    const sp = Proj.s.voice ? say(ORENA,.97) : Promise.resolve();
+    await Promise.all([typeIn($("#ty"), ORENA, Proj.s.voice?42:28), sp]); talking=false;
+    for(let k=5;k>0 && !skipping;k--){ $("#dest").textContent = "Ce message s'effacera dans "+k+" s"; Snd.tickSnd(); await sleep(1000); }
+    if(!skipping){ $("#ty").classList.add("go"); $("#dest").textContent=""; Snd.static(1.6); noise(true); await sleep(1700); noise(false); }
+    cancelAnimationFrame(waveRAF); Snd.setDuck(1);
+  }
+  // 5. go
+  if(!skipping){
+    scene.innerHTML = `<div class="glitch" style="color:var(--sodium);animation:none">60:00</div><div class="sub">LE CHRONO DÉMARRE</div>`;
+    Snd.siren(1); await sleep(1600);
+  }
+  if("speechSynthesis" in window) try{ speechSynthesis.cancel(); }catch(e){}
+  cancelAnimationFrame(waveRAF); noise(false); Snd.setDuck(1); talking=false;
+  st.classList.remove("on"); Snd.stop(); Proj.startClock();
+}
+$("#pIntro").onclick = intro;
+$("#skip").onclick = ()=>{ skipping=true; if("speechSynthesis" in window) try{ speechSynthesis.cancel(); }catch(e){} };
+
+/* ================= POSTE D'ÉQUIPE ================= */
+const Team = {
+  s:null, pick:null, sheetId:null,
+  open(){
+    this.s = store.get("bunker_team");
+    if(this.s && this.s.team){ this.startGame(); return; }
+    $("#signup").hidden=false; $("#game").hidden=true;
+    const tp=$("#teamPick"); tp.innerHTML="";
+    TEAMS.forEach(n=>{ const b=document.createElement("button"); b.textContent=n; b.setAttribute("aria-pressed","false"); b.onclick=()=>{ this.pick=n; tp.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed", x===b?"true":"false")); }; tp.appendChild(b); });
+  },
+  startGame(){
+    $("#signup").hidden=true; $("#game").hidden=false;
+    $("#who").innerHTML = `Cellule ${esc(this.s.team)}<small>${esc(this.s.names.join(" et "))}</small>`;
+    this.render();
+    if(!this._iv) this._iv=setInterval(()=>this.tick(),500);
+  },
+  elapsed(){ return Date.now()-this.s.startedAt; },
+  penalty(){ return Object.values(this.s.hints).reduce((a,b)=>a+b,0)*HINT_PEN; },
+  tick(){
+    if(!this.s || !$("#team").classList.contains("on")) return;
+    const r = DURATION - this.elapsed() - this.penalty(); const el=$("#tClock");
+    el.textContent = r>0 ? fmt(r) : "−"+fmt(-r); el.classList.toggle("red", r<=5*60000);
+    const nh=Object.values(this.s.hints).reduce((a,b)=>a+b,0);
+    $("#tPen").textContent = nh+" indice"+(nh>1?"s":"")+" · −"+(nh*2)+" min";
+    if(r<=0 && !this.s.overWarned){ this.s.overWarned=true; this.save(); $("#doorMsg").className="msg bad"; $("#doorMsg").textContent="Les Antitek sont arrivés. Continuez quand même : la Résistance a besoin de vos réponses."; Snd.siren(2); }
+  },
+  save(){ store.set("bunker_team", this.s); },
+  render(){
+    const sl=$("#slots"); sl.innerHTML="";
+    const bypos={}; Object.values(this.s.solved).forEach(v=>bypos[v.pos]=v.letter);
+    for(let p=1;p<=8;p++){ const sp=document.createElement("span"); sp.dataset.n=p; sp.textContent=bypos[p]||""; sl.appendChild(sp); }
+    const lk=$("#lockers"); lk.innerHTML="";
+    DATA.enigmes.forEach((e,ix)=>{
+      const sv=this.s.solved[e.id];
+      const b=document.createElement("button"); b.className="locker"+(sv?" done":"");
+      b.innerHTML = `<span class="num">${["I","II","III","IV","V","VI","VII","VIII"][ix]}</span>${sv?`<span class="got">${esc(sv.letter)}</span>`:""}<span class="th">${esc(e.theme)}</span><span class="st">${sv?"Ouvert · lettre n° "+sv.pos:"Scellé · "+esc(e.titre)}</span>`;
+      b.onclick=()=>this.openSheet(e.id);
+      lk.appendChild(b);
+    });
+    const n=Object.keys(this.s.solved).length;
+    $("#doorInfo").textContent = `${n} casier${n>1?"s":""} ouvert${n>1?"s":""} sur 8. ` + (n>=6 ? "La porte accepte le mot de passe." : `Il en faut au moins 6 (encore ${6-n}).`);
+    $("#tMusic").textContent = "Musique : "+(Snd.on?"en marche":"coupée");
+    this.tick();
+  },
+  openSheet(id){
+    const e=DATA.enigmes.find(x=>x.id===id); this.sheetId=id;
+    const sv=this.s.solved[id]; const nh=this.s.hints[id]||0;
+    const sh=$("#sheet");
+    sh.innerHTML = `<span class="stamp">${sv?"Résolu":"Confidentiel"}</span>
+      <div class="k">Casier ${["I","II","III","IV","V","VI","VII","VIII"][DATA.enigmes.indexOf(e)]} · ${esc(e.theme)}</div>
+      <h2>${esc(e.titre)}</h2>
+      ${e.html}
+      <p class="q">${e.q}</p>
+      <form class="answer" id="ansForm" autocomplete="off"><label class="k" for="ans" style="flex-basis:100%">Votre réponse</label><input id="ans" ${sv?"disabled":""} placeholder="${esc(e.ph)}" spellcheck="false"><button class="btn" ${sv?"disabled":""}>Valider</button></form>
+      <div class="fb" id="fb"></div>
+      <div class="reveal ${sv?"on":""}" id="rev">Lettre obtenue<b>${sv?esc(sv.letter):""}</b>Elle se place en position <strong>${sv?sv.pos:""}</strong> du mot de passe.</div>
+      <div class="hints" id="hints">${e.hints.slice(0,nh).map((h,i)=>`<div class="hint">Indice ${i+1} : ${h}</div>`).join("")}</div>
+      <div class="row"><button class="ghost" id="hintBtn" ${nh>=e.hints.length||sv?"disabled":""}>Demander un indice (+2 min)</button><button class="ghost" id="close">Refermer le casier</button></div>`;
+    $("#sheetbg").classList.add("on"); $("#sheetbg").scrollTop=0;
+    $("#close").onclick=()=>this.closeSheet();
+    $("#hintBtn").onclick=()=>{ this.s.hints[id]=(this.s.hints[id]||0)+1; this.save(); this.openSheet(id); };
+    $("#ansForm").onsubmit=ev=>{ ev.preventDefault(); this.check(e); };
+    if(!sv) setTimeout(()=>{ const a=$("#ans"); a && a.focus({preventScroll:true}); },50);
+  },
+  closeSheet(){ $("#sheetbg").classList.remove("on"); this.sheetId=null; this.render(); },
+  async check(e){
+    const fb=$("#fb"); const now=Date.now();
+    if(this.s.lock && this.s.lock[e.id] > now){ fb.className="fb bad"; fb.textContent=`Clavier bloqué par le système anti-intrusion : ${Math.ceil((this.s.lock[e.id]-now)/1000)} s.`; return; }
+    const raw=$("#ans").value; const n=norm(raw,e.type);
+    if(!n){ fb.className="fb bad"; fb.textContent="Écrivez une réponse."; return; }
+    const h=hex(await sha("BUNKER|"+e.id+"|"+n));
+    if(h===e.h){
+      const lb=await sha("LETTRE|"+e.id+"|"+n);
+      const letter=String.fromCharCode(65+((lb[0]+e.k)%26));
+      this.s.solved[e.id]={letter, pos:e.pos, at:Date.now()}; this.save();
+      Snd.success(); this.openSheet(e.id);
+      const f2=$("#fb"); f2.className="fb good"; f2.textContent="Mécanisme déverrouillé.";
+    } else {
+      this.s.fails=this.s.fails||{}; this.s.fails[e.id]=(this.s.fails[e.id]||0)+1;
+      const wait=Math.min(30, 5*this.s.fails[e.id]); this.s.lock=this.s.lock||{}; this.s.lock[e.id]=Date.now()+wait*1000; this.save();
+      Snd.error(); fb.className="fb bad"; fb.textContent=`Mauvaise réponse. Le système anti-intrusion bloque ce casier ${wait} s.`;
+    }
+  }
+};
+$("#enter").onclick = ()=>{
+  const a=$("#n1").value.trim(), b=$("#n2").value.trim();
+  if(!Team.pick){ $("#signMsg").textContent="Choisissez votre cellule."; return; }
+  if(!a||!b){ $("#signMsg").textContent="Écrivez vos deux prénoms."; return; }
+  Team.s={team:Team.pick, names:[a,b], startedAt:Date.now(), solved:{}, hints:{}, fails:{}, lock:{}};
+  Team.save(); Snd.resume(); Snd.siren(1); Team.startGame();
+};
+$("#tMusic").onclick = ()=>{ Snd.resume(); if(Snd.on) Snd.stop(); else { Snd.intensity=1; Snd.bpm=138; Snd.setVol(.45); Snd.start(); } Team.render(); };
+$("#sheetbg").addEventListener("click", e=>{ if(e.target.id==="sheetbg") Team.closeSheet(); });
+document.addEventListener("keydown", e=>{ if(e.key==="Escape" && $("#sheetbg").classList.contains("on")) Team.closeSheet(); });
+
+$("#doorForm").onsubmit = async ev=>{
+  ev.preventDefault(); const m=$("#doorMsg");
+  const n=Object.keys(Team.s.solved).length; const p=norm($("#pass").value);
+  if(n<6){ m.className="msg bad"; m.textContent=`La porte reste froide : seulement ${n} casier${n>1?"s":""} ouvert${n>1?"s":""}. Orena exige au moins 6 concepts compris.`; Snd.error(); return; }
+  if(hex(await sha("PORTE|"+p))!==DATA.porte){ m.className="msg bad"; m.textContent="Mot de passe refusé. Placez chaque lettre à sa position, puis devinez celles qui manquent."; Snd.error(); return; }
+  if(!Team.s.escapedAt){ Team.s.escapedAt=Date.now(); Team.save(); }
+  victory();
+};
+function victory(){
+  const s=Team.s; const n=Object.keys(s.solved).length; const nh=Object.values(s.hints).reduce((a,b)=>a+b,0);
+  const used = (s.escapedAt - s.startedAt) + nh*HINT_PEN;
+  $("#winTxt").textContent = `${s.names.join(" et ")}, la cellule ${s.team} quitte le bunker avec ${n} concept${n>1?"s":""} sur 8. Temps (pénalités comprises) : ${fmt(used)}.`;
+  $("#winCode").textContent = `${norm(s.team)} · ${fmt(used)} · ${n}/8 · ${nh} indice${nh>1?"s":""}`;
+  $("#winSweets").textContent = n===8 ? "Les 8 casiers sont ouverts : la réserve de friandises d'Orena est à vous. Montrez cet écran au professeur." : `Annoncez ce code au professeur. Il reste ${8-n} casier${8-n>1?"s":""} : revenez les ouvrir pour gagner les friandises.`;
+  const w=$("#win"); w.classList.remove("open"); w.classList.add("on"); Snd.door(); setTimeout(()=>w.classList.add("open"),300);
+}
+$("#winBack").onclick = ()=>{ $("#win").classList.remove("on","open"); Team.render(); };
+
+/* ================= COIN DU PROF ================= */
+$("#profForm").onsubmit = async ev=>{
+  ev.preventDefault();
+  const pw=$("#profPw").value.trim().toLowerCase();
+  const bytes=Uint8Array.from(atob(PROF_BLOB), c=>c.charCodeAt(0));
+  const out=new Uint8Array(bytes.length);
+  for(let i=0;i<bytes.length;i+=32){ const ks=await sha(pw+"|"+(i/32)); for(let j=0;j<32 && i+j<bytes.length;j++) out[i+j]=bytes[i+j]^ks[j]; }
+  let txt=""; try{ txt=new TextDecoder("utf-8",{fatal:true}).decode(out); }catch(e){ txt=""; }
+  if(!txt.startsWith("OK|")){ $("#profMsg").textContent="Mot de passe incorrect."; $("#pcontent").hidden=true; return; }
+  $("#profMsg").textContent=""; const pc=$("#pcontent"); pc.innerHTML=txt.slice(3); pc.hidden=false;
+  const rb=pc.querySelector("#resetTeam"); if(rb) rb.onclick=()=>{ store.del("bunker_team"); Team.s=null; rb.textContent="Poste remis à zéro"; };
+};
+
+/* reprise automatique d'une partie en cours sur ce poste */
+if(store.get("bunker_team")){ /* rien : le poste reprend quand on ouvre « Poste d'un binôme » */ }
+</script>
+
+</body></html>
